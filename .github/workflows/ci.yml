@@ -6,16 +6,19 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
+
+    - name: Set up Go 1.15.6
+      uses: actions/setup-go@v2
       with:
-        go-version: '1.13' 
-    - name: Check out code into the Go module directory
+        go-version: '1.15.6' 
+
+    - name: Check out code
       uses: actions/checkout@v2
-    - name: Run GolangCI-Lint 
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.3
-        ./bin/golangci-lint run --enable-all ./...
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v2.3.0
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
@@ -27,17 +30,21 @@ jobs:
       uses: docker/setup-buildx-action@v1
       with:
         version: latest
+
     - name: Builder instance name
       run: echo ${{ steps.buildx.outputs.name }}
+
     - name: Available platforms
       run: echo ${{ steps.buildx.outputs.platforms }}
+    
     - name: Run Buildx
       run: |
         docker buildx build \
           --platform linux/arm/v7 \
           --tag rpi-ws281x-builder \
           --load \
-          --file Dockerfile .
+          --file Dockerfile \
+          ./docker/full-builder/
 
     - name: Build Swiss examples
       run: |
@@ -60,7 +67,6 @@ jobs:
     - name: Build hw examples
       run: |
         docker run --rm -v "$(pwd)"/examples/hw:/go/src/hw rpi-ws281x-builder go build -o src/hw/hw -v hw
-        docker run --rm -v "$(pwd)"/examples/invader8x8:/go/src/invader8x8 rpi-ws281x-builder go build -o src/invader8x8/invader8x8 -v invader8x8
     - name: Upload hw binary
       uses: actions/upload-artifact@v1
       with:
