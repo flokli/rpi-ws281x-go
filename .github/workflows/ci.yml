@@ -37,21 +37,38 @@ jobs:
     - name: Available platforms
       run: echo ${{ steps.buildx.outputs.platforms }}
     
-    - name: Run Buildx
+    - name: Build ARM-V7 builder
       run: |
         docker buildx build \
-          --platform linux/arm/v7,linux/arm64 \
-          --tag rpi-ws281x-builder \
+          --platform linux/arm/v7 \
+          --tag rpi-ws281x-builder-armv7 \
           --load \
           --file ./docker/builder/Dockerfile .
 
-    - name: Build examples
+    - name: Build examples (arm-v7)
       run: |
         for i in examples/*; do \
           docker run --rm \
             -v "$(pwd)/$i":/usr/src/$(basename $i) \
             -w /usr/src/$(basename $i) \
-            --platform linux/arm/v7 \
-            rpi-ws281x-builder \
+            rpi-ws281x-builder-armv7 \
             go build -o $(basename $i)-armv7 -v .
+        done
+
+    - name: Build ARM64 builder
+      run: |
+        docker buildx build \
+          --platform linux/arm64 \
+          --tag rpi-ws281x-builder-arm64 \
+          --load \
+          --file ./docker/builder/Dockerfile .
+
+    - name: Build examples (arm64)
+      run: |
+        for i in examples/*; do \
+          docker run --rm \
+            -v "$(pwd)/$i":/usr/src/$(basename $i) \
+            -w /usr/src/$(basename $i) \
+            rpi-ws281x-builder-arm64 \
+            go build -o $(basename $i)-arm64 -v .
         done
