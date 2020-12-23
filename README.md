@@ -47,42 +47,10 @@ default * docker
 If you see `linux/arm/v6` and `linux/arm/v7` you can cross-compile for arm 32 bits. If you see `linux/arm64` you
 can compile code for arm 64 bits.
 
-Now you need to build a docker image with the required toolchain and libraries. You can add the following `Dockerfile` to
-the root of your project:
+Now you need to build a docker image with the required toolchain and libraries:
 
 ```
-# Stage 0 : Build the C library 
-
-FROM debian AS lib_builder
-
-WORKDIR /foundry
-
-RUN apt-get update -y && apt-get install -y \
-  build-essential \
-  cmake \
-  git
-
-RUN git clone https://github.com/jgarff/rpi_ws281x.git \
-  && cd rpi_ws281x \ 
-  && mkdir build \
-  && cd build \ 
-  && cmake -D BUILD_SHARED=OFF -D BUILD_TEST=OFF .. \
-  && cmake --build . \
-  && make install
-
-# Stage 1 : Build a go image with the rpi_ws281x C library and the go wrapper
-
-FROM golang:latest
-COPY --from=lib_builder /usr/local/lib/libws2811.a /usr/local/lib/
-COPY --from=lib_builder /usr/local/include/ws2811 /usr/local/include/ws2811
-
-RUN go get github.com/rpi-ws281x/rpi-ws281x-go
-```
-
-Now build a Docker image for your target architecture. For arm/v7 run this command:
-
-```
-docker buildx build --platform linux/arm/v7 --tag ws2811-builder .
+docker buildx build --platform linux/arm/v7 --tag ws2811-builder --file docker/app-builder/Dockerfile .
 ```
 
 You can replace `linux/arm/v7` by `linux/arm64` if you want to build for arm64.

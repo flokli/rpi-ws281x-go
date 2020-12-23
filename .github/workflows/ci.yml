@@ -43,7 +43,7 @@ jobs:
           --platform linux/arm/v7 \
           --tag rpi-ws281x-builder-armv7 \
           --load \
-          --file ./docker/builder/Dockerfile .
+          --file ./docker/ci-builder/Dockerfile .
 
     - name: Build examples (arm-v7)
       run: |
@@ -61,7 +61,7 @@ jobs:
           --platform linux/arm64 \
           --tag rpi-ws281x-builder-arm64 \
           --load \
-          --file ./docker/builder/Dockerfile .
+          --file ./docker/ci-builder/Dockerfile .
 
     - name: Build examples (arm64)
       run: |
