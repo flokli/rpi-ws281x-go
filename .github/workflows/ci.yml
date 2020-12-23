@@ -73,10 +73,11 @@ jobs:
             go build -o $(basename $i)-arm64 -v .
         done
 
+    - run: pwd
     - run: find .
 
     - name: Upload example binary
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: examples
         path: |
