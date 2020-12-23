@@ -52,17 +52,3 @@ jobs:
           -w /go/src/swiss \
           rpi-ws281x-builder \
           go build -o swiss -v .
-
-        docker run --rm -v "$(pwd)"/examples/color_wipe:/go/src/color_wipe rpi-ws281x-builder go build -o src/color_wipe/color_wipe -v color_wipe
-        docker run --rm -v "$(pwd)"/examples/hw:/go/src/hw rpi-ws281x-builder go build -o src/hw/hw -v hw
-        docker run --rm -v "$(pwd)"/examples/invader8x8:/go/src/invader8x8 rpi-ws281x-builder go build -o src/invader8x8/invader8x8 -v invader8x8
-
-    - name: Upload examples
-      uses: actions/upload-artifact@v1
-      with:
-        name: examples
-        path: |      
-          examples/swiss/swiss
-          examples/color_wipe/color_wipe
-          examples/hw/hw
-          examples/invader8x8/invader8x8
