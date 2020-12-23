@@ -23,7 +23,7 @@ FROM golang:latest
 COPY --from=lib_builder /usr/local/lib/libws2811.a /usr/local/lib/
 COPY --from=lib_builder /usr/local/include/ws2811 /usr/local/include/ws2811
 
-WORKDIR /go/src/app
+WORKDIR /go/src/github.com/rpi-ws281x/rpi-ws281x-go
 COPY . .
 RUN go get -d -v ./...
 RUN go build -v ./...
