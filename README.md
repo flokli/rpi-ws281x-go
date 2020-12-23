@@ -28,50 +28,82 @@ easy in go... unless you use cgo. And because this module is a wrapper around a 
 cross compilation is not so easy.
 
 The solution proposed here uses a docker container to cross-compile the go code and should work on GNU/Linux, macos
-and Windows. The docker container uses a [balena](https://www.balena.io/) image that emulate an ARM processor using QEMU.
+and Windows.
 
-Start by writing the following `Dockerfile` (also available in the repository):
-
-```
-FROM balenalib/raspberrypi3-golang:latest-build AS builder
-RUN [ "cross-build-start" ]
-WORKDIR /tmp
-RUN apt-get update -y && apt-get install -y scons
-RUN git clone https://github.com/jgarff/rpi_ws281x.git && \
-  cd rpi_ws281x && \
-  scons
-RUN [ "cross-build-end" ]
-
-FROM balenalib/raspberrypi3-golang:latest
-RUN [ "cross-build-start" ]
-COPY --from=builder /tmp/rpi_ws281x/*.a /usr/local/lib/
-COPY --from=builder /tmp/rpi_ws281x/*.h /usr/local/include/
-RUN go get -v -u github.com/rpi-ws281x/rpi-ws281x-go
-RUN [ "cross-build-end" ]
-```
-
-You might want to change the base image if you are not using the Raspberry Pi 3.
-
-Now build the image with the command :
+First check that you have a recent version of docker desktop. Run the following command:
 
 ```
-docker build --tag rpi-ws281x-go-builder .
+docker buildx  ls
 ```
 
-The resulting image (`rpi-ws281x-go-builder`) contains the C library (in `/usr/local`) and a compiled version of the wrapper.
-You can now use this image in a container to build your application. For example, if you want to build
-the "swiss" example, run the following command:
+You should see something like this :
 
 ```
-docker run --rm -ti -v "$(pwd)"/examples/swiss:/go/src/swiss rpi-ws281x-go-builder /usr/bin/qemu-arm-static /bin/sh -c "go build -o src/swiss/swiss -v swiss"
+NAME/NODE DRIVER/ENDPOINT STATUS  PLATFORMS
+default * docker
+  default default         running linux/amd64, linux/arm64, ..., linux/arm/v7, linux/arm/v6
+```
+
+If you see `linux/arm/v6` and `linux/arm/v7` you can cross-compile for arm 32 bits. If you see `linux/arm64` you
+can compile code for arm 64 bits.
+
+Now you need to build a docker image with the required toolchain and libraries. You can add the following `Dockerfile` to
+the root of your project:
+
+```
+# Stage 0 : Build the C library 
+
+FROM debian AS lib_builder
+
+WORKDIR /foundry
+
+RUN apt-get update -y && apt-get install -y \
+  build-essential \
+  cmake \
+  git
+
+RUN git clone https://github.com/jgarff/rpi_ws281x.git \
+  && cd rpi_ws281x \ 
+  && mkdir build \
+  && cd build \ 
+  && cmake -D BUILD_SHARED=OFF -D BUILD_TEST=OFF .. \
+  && cmake --build . \
+  && make install
+
+# Stage 1 : Build a go image with the rpi_ws281x C library and the go wrapper
+
+FROM golang:latest
+COPY --from=lib_builder /usr/local/lib/libws2811.a /usr/local/lib/
+COPY --from=lib_builder /usr/local/include/ws2811 /usr/local/include/ws2811
+
+RUN go get github.com/rpi-ws281x/rpi-ws281x-go
+```
+
+Now build a Docker image for your target architecture. For arm/v7 run this command:
+
+```
+docker buildx build --platform linux/arm/v7 --tag ws2811-builder .
+```
+
+You can replace `linux/arm/v7` by `linux/arm64` if you want to build for arm64.
+
+You can now use this Docker image to build your app. For example, you can build the "swiss" example using this command:
+
+```
+> cd examples/swiss
+> APP="swiss"
+> docker run --rm -v "$PWD":/usr/src/$APP --platform linux/arm/v7 \
+  -w /usr/src/$APP ws2811-builder:latest go build -o "$APP-armv7" -v
 ```
 
 On GNU/Linux or macos, you can check the built binary with the `file` command:
 
 ```
-file examples/swiss/swiss
+> file swiss-armv7
 
-examples/swiss/swiss: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.2.0, BuildID[sha1]=7178d110f504aceb3fb184ec984e402fd2c8712e, not stripped
+swiss-armv7: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV),
+  dynamically linked, interpreter /lib/ld-linux-armhf.so.3, for GNU/Linux 3.2.0,
+  Go BuildID=..., BuildID[sha1]=..., not stripped```
 ```
 
 As you can see, the resulting binary is an executable file for the ARM processor.
@@ -101,4 +133,16 @@ Here is the result of the "Swiss" example:
 ## Special Thanks
 
 * Thank you to [Jeremy Garff](https://github.com/jgarff) for writing and maintaining the C library.
-* Thank you to [Herman](https://github.com/hermanbanken) for his contribution to the documentation and for the idea of using balena for cross-compilation.
+* Thank you to all contributors (alphabetically): 
+  - [Alexandr Pavlyuk](https://github.com/pav5000)
+  - [Allen Flickinger](https://github.com/FuzzyStatic) 
+  - [Ben Watkins](https://github.com/OutdatedVersion)
+  - [Chris C.](https://github.com/TwinProduction)
+  - [Elie Grenon](https://github.com/DrunkenPoney)
+  - [Herman](https://github.com/hermanbanken)
+  - [Ivaylo Stoyanov](https://github.com/ivkos)
+  - [Stephen Onnen](https://github.com/onnenon)
+
+## Projects using this module
+
+* [Rainbow and Random demo](https://github.com/FuzzyStatic/rpi-ws281x-examples-go)
