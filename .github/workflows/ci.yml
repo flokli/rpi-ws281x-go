@@ -72,3 +72,11 @@ jobs:
             rpi-ws281x-builder-arm64 \
             go build -o $(basename $i)-arm64 -v .
         done
+
+    - name: Upload example binary
+      uses: actions/upload-artifact@v1
+      with:
+        name: examples
+        path: |
+          examples/*/*-armv7
+          examples/*/*-armv64
