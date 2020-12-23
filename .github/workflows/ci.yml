@@ -47,8 +47,8 @@ jobs:
 
     - name: Build examples
       run: |
-        docker run --rm --env GO111MODULE=on \
-          -v "$(pwd)"/examples/swiss:/go/src/swiss \
-          -w /go/src/swiss \
+        docker run --rm \
+          -v "$(pwd)"/examples/swiss:/usr/src/swiss \
+          -w /usr/src/swiss \
           rpi-ws281x-builder \
           go build -o swiss -v .
