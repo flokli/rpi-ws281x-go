@@ -47,7 +47,12 @@ jobs:
 
     - name: Build examples
       run: |
-        docker run --rm --env GO111MODULE=on -v "$(pwd)"/examples/swiss:/go/src/swiss rpi-ws281x-builder go build -o src/swiss/swiss -v swiss
+        docker run --rm --env GO111MODULE=on \
+          -v "$(pwd)"/examples/swiss:/go/src/swiss \
+          -w /go/src/swiss \
+          rpi-ws281x-builder \
+          go build -o swiss -v .
+
         docker run --rm -v "$(pwd)"/examples/color_wipe:/go/src/color_wipe rpi-ws281x-builder go build -o src/color_wipe/color_wipe -v color_wipe
         docker run --rm -v "$(pwd)"/examples/hw:/go/src/hw rpi-ws281x-builder go build -o src/hw/hw -v hw
         docker run --rm -v "$(pwd)"/examples/invader8x8:/go/src/invader8x8 rpi-ws281x-builder go build -o src/invader8x8/invader8x8 -v invader8x8
