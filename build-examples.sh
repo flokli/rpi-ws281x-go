@@ -9,8 +9,5 @@ for i in examples/*; do
     docker run --platform linux/arm64 --rm -v "$(pwd)/$i":"/usr/src/$app"  -w /usr/src/$app rpi-ws281x-builder-arm64 go build -o "$app-arm64" -v
 done
 
-docker rmi rpi-ws281x-builder-armv7
-docker rmi rpi-ws281x-builder-arm64
-
 file examples/*/*-armv7
 file examples/*/*-arm64
