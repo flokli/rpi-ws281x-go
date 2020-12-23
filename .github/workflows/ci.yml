@@ -43,7 +43,6 @@ jobs:
           --platform linux/arm/v7 \
           --tag rpi-ws281x-builder \
           --load \
-          --file Dockerfile \
           ./docker/full-builder/
 
     - name: Build Swiss examples
