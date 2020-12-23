@@ -47,8 +47,10 @@ jobs:
 
     - name: Build examples
       run: |
-        docker run --rm \
-          -v "$(pwd)"/examples/swiss:/usr/src/swiss \
-          -w /usr/src/swiss \
-          rpi-ws281x-builder \
-          go build -o swiss -v .
+        for i in examples/*; do \
+          docker run --rm \
+            -v "$(pwd)"$i:/usr/src/$(basename $i) \
+            -w /usr/src/$(basename $i) \
+            rpi-ws281x-builder \
+            go build -o $(basename $i)-armv7 -v .
+        done
