@@ -40,7 +40,7 @@ jobs:
     - name: Run Buildx
       run: |
         docker buildx build \
-          --platform linux/arm/v7 \
+          --platform linux/arm/v7,linux/arm64 \
           --tag rpi-ws281x-builder \
           --load \
           --file ./docker/builder/Dockerfile .
@@ -51,6 +51,7 @@ jobs:
           docker run --rm \
             -v "$(pwd)/$i":/usr/src/$(basename $i) \
             -w /usr/src/$(basename $i) \
+            --platform linux/arm/v7 \
             rpi-ws281x-builder \
             go build -o $(basename $i)-armv7 -v .
         done
